@@ -13,6 +13,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.CallEnd
+import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.filled.MicOff
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -23,18 +25,31 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.sneha.safeherapp.util.FakeCallPrefs
 import kotlinx.coroutines.delay
+import java.io.File
+import java.util.Locale
 
 @Composable
 fun FakeCallScreen(onBack: () -> Unit) {
     val context = LocalContext.current
-    var callStatus by remember { mutableStateOf("Incoming Call...") }
-    var isCallAccepted by remember { mutableStateOf(false) }
+    val activeProfile = remember { FakeCallPrefs.getActiveProfile(context) }
     
-    val mediaPlayer = remember {
+    val callerName = activeProfile?.name ?: "Mom"
+    val audioPath = activeProfile?.audioPath
+    
+    var isCallAccepted by remember { mutableStateOf(false) }
+    var callTimer by remember { mutableIntStateOf(0) }
+    var isMuted by remember { mutableStateOf(false) }
+    
+    // MediaPlayer for Ringtone
+    val ringtonePlayer = remember {
         val notification = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE)
-        MediaPlayer.create(context, notification)
+        MediaPlayer.create(context, notification)?.apply { isLooping = true }
     }
+
+    // MediaPlayers for Voice Conversation
+    var voicePlayer by remember { mutableStateOf<MediaPlayer?>(null) }
 
     val vibrator = remember {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -46,12 +61,11 @@ fun FakeCallScreen(onBack: () -> Unit) {
         }
     }
 
+    // Ringing and Vibration Effect
     LaunchedEffect(Unit) {
-        delay(3000) // 3 seconds delay before "ringing" starts
+        delay(500) // Reduced delay for almost immediate trigger
         if (!isCallAccepted) {
-            mediaPlayer?.isLooping = true
-            mediaPlayer?.start()
-            
+            ringtonePlayer?.start()
             val pattern = longArrayOf(0, 1000, 1000)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 vibrator.vibrate(VibrationEffect.createWaveform(pattern, 0))
@@ -62,10 +76,38 @@ fun FakeCallScreen(onBack: () -> Unit) {
         }
     }
 
+    // Timer and Voice Logic
+    LaunchedEffect(isCallAccepted) {
+        if (isCallAccepted) {
+            try {
+                if (audioPath != null && File(audioPath).exists()) {
+                    voicePlayer = MediaPlayer().apply {
+                        setDataSource(audioPath)
+                        prepare()
+                        start()
+                    }
+                } else {
+                    val resId = context.resources.getIdentifier("fake_call_hello", "raw", context.packageName)
+                    if (resId != 0) {
+                        voicePlayer = MediaPlayer.create(context, resId)
+                        voicePlayer?.start()
+                    }
+                }
+            } catch (e: Exception) { e.printStackTrace() }
+
+            while (true) {
+                delay(1000)
+                callTimer++
+            }
+        }
+    }
+
     DisposableEffect(Unit) {
         onDispose {
-            mediaPlayer?.stop()
-            mediaPlayer?.release()
+            ringtonePlayer?.stop()
+            ringtonePlayer?.release()
+            voicePlayer?.stop()
+            voicePlayer?.release()
             vibrator.cancel()
         }
     }
@@ -100,7 +142,7 @@ fun FakeCallScreen(onBack: () -> Unit) {
                 Spacer(modifier = Modifier.height(24.dp))
                 
                 Text(
-                    text = "Mom",
+                    text = callerName,
                     fontSize = 32.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color.White
@@ -109,9 +151,9 @@ fun FakeCallScreen(onBack: () -> Unit) {
                 Spacer(modifier = Modifier.height(8.dp))
                 
                 Text(
-                    text = callStatus,
+                    text = if (isCallAccepted) formatTime(callTimer) else "Incoming Call...",
                     fontSize = 18.sp,
-                    color = Color.Gray
+                    color = if (isCallAccepted) Color.Green else Color.Gray
                 )
             }
 
@@ -120,7 +162,6 @@ fun FakeCallScreen(onBack: () -> Unit) {
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 40.dp),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    // Decline Button
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         LargeIconButton(
                             icon = Icons.Default.CallEnd,
@@ -130,15 +171,13 @@ fun FakeCallScreen(onBack: () -> Unit) {
                         Text("Decline", color = Color.White, modifier = Modifier.padding(top = 8.dp))
                     }
 
-                    // Accept Button
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         LargeIconButton(
                             icon = Icons.Default.Call,
                             backgroundColor = Color.Green,
                             onClick = {
                                 isCallAccepted = true
-                                callStatus = "00:01"
-                                mediaPlayer?.stop()
+                                ringtonePlayer?.stop()
                                 vibrator.cancel()
                             }
                         )
@@ -146,24 +185,33 @@ fun FakeCallScreen(onBack: () -> Unit) {
                     }
                 }
             } else {
-                // Ongoing Fake Call UI
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        text = "\"Hi, where are you? I've been waiting for you. Let's meet up soon.\"",
-                        color = Color.White,
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Medium,
-                        modifier = Modifier.padding(horizontal = 40.dp),
-                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                    )
-                    
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 60.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            SmallIconButton(
+                                icon = if (isMuted) Icons.Default.MicOff else Icons.Default.Mic,
+                                onClick = { isMuted = !isMuted }
+                            )
+                            Text("Mute", color = Color.White, fontSize = 12.sp)
+                        }
+
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            SmallIconButton(icon = Icons.Default.Call, onClick = {})
+                            Text("Keypad", color = Color.White, fontSize = 12.sp)
+                        }
+                    }
+
                     Spacer(modifier = Modifier.height(60.dp))
-                    
+
                     LargeIconButton(
                         icon = Icons.Default.CallEnd,
                         backgroundColor = Color.Red,
                         onClick = onBack
                     )
+                    Text("End Call", color = Color.White, modifier = Modifier.padding(top = 8.dp))
                 }
             }
         }
@@ -189,4 +237,25 @@ fun LargeIconButton(
             tint = Color.White
         )
     }
+}
+
+@Composable
+fun SmallIconButton(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    onClick: () -> Unit
+) {
+    FilledIconButton(
+        onClick = onClick,
+        modifier = Modifier.size(56.dp),
+        shape = CircleShape,
+        colors = IconButtonDefaults.filledIconButtonColors(containerColor = Color.White.copy(alpha = 0.1f))
+    ) {
+        Icon(imageVector = icon, contentDescription = null, tint = Color.White)
+    }
+}
+
+private fun formatTime(seconds: Int): String {
+    val mins = seconds / 60
+    val secs = seconds % 60
+    return String.format(Locale.getDefault(), "%02d:%02d", mins, secs)
 }

@@ -11,14 +11,20 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.sneha.safeherapp.ui.auth.LoginScreen
 import com.sneha.safeherapp.ui.auth.SignupScreen
 import com.sneha.safeherapp.ui.fakecall.FakeCallScreen
+import com.sneha.safeherapp.ui.fakecall.VoiceRecorderScreen
 import com.sneha.safeherapp.ui.home.GuardianDashboard
 import com.sneha.safeherapp.ui.home.UserHomeScreen
+import com.sneha.safeherapp.ui.settings.FakeCallSettingsScreen
+import com.sneha.safeherapp.ui.settings.SettingsScreen
+import com.sneha.safeherapp.util.FakeCallPrefs
 import com.sneha.safeherapp.viewmodel.AuthState
 import com.sneha.safeherapp.viewmodel.AuthViewModel
 
@@ -40,7 +46,6 @@ fun AppNavigation(context: Context) {
                 
                 navController.navigate(targetRoute) {
                     popUpTo(Screen.Login.route) { inclusive = true }
-                    popUpTo(Screen.Signup.route) { inclusive = true }
                 }
             }
             is AuthState.Error -> {
@@ -86,7 +91,8 @@ fun AppNavigation(context: Context) {
         composable(Screen.UserHome.route) {
             UserHomeScreen(
                 onLogout = { authViewModel.logout() },
-                onNavigateToFakeCall = { navController.navigate(Screen.FakeCall.route) }
+                onNavigateToFakeCall = { navController.navigate(Screen.FakeCall.route) },
+                onNavigateToSettings = { navController.navigate(Screen.Settings.route) }
             )
         }
         composable(Screen.GuardianDashboard.route) {
@@ -94,6 +100,35 @@ fun AppNavigation(context: Context) {
         }
         composable(Screen.FakeCall.route) {
             FakeCallScreen(onBack = { navController.popBackStack() })
+        }
+        composable(Screen.Settings.route) {
+            SettingsScreen(navController)
+        }
+        composable(Screen.FakeCallSettings.route) {
+            FakeCallSettingsScreen(
+                onBack = { navController.popBackStack() },
+                onNavigateToVoiceRecorder = { profileId -> 
+                    navController.navigate(Screen.VoiceRecorder.createRoute(profileId)) 
+                }
+            )
+        }
+        composable(
+            route = "voice_recorder/{profileId}",
+            arguments = listOf(navArgument("profileId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val profileId = backStackEntry.arguments?.getString("profileId") ?: ""
+            VoiceRecorderScreen(
+                profileId = profileId,
+                onBack = { navController.popBackStack() },
+                onSaved = { path ->
+                    val profiles = FakeCallPrefs.getProfiles(context)
+                    val updated = profiles.map { 
+                        if (it.id == profileId) it.copy(audioPath = path) else it 
+                    }
+                    FakeCallPrefs.saveProfiles(context, updated)
+                    navController.popBackStack()
+                }
+            )
         }
     }
 }

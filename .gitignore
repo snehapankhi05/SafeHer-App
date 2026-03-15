@@ -13,3 +13,32 @@
 .externalNativeBuild
 .cxx
 local.properties
+*.env
+service-account*.json
+# Android
+
+/.idea
+
+
+# Kotlin
+*.class
+*.log
+
+# Gradle
+.gradle/
+build/
+
+# Android Studio
+.idea/
+
+# Firebase
+google-services.json
+
+# Secrets
+*.keystore
+*.jks
+*.pem
+*.key
+
+# OS
+Thumbs.db

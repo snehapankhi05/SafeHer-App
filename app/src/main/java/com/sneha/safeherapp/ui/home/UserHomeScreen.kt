@@ -1,9 +1,11 @@
 package com.sneha.safeherapp.ui.home
 
 import android.Manifest
+import android.app.Activity
 import android.content.Context
 import android.content.pm.PackageManager
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -28,6 +30,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -39,6 +42,7 @@ import com.sneha.safeherapp.ui.theme.LightPurple
 import com.sneha.safeherapp.ui.theme.SoftPink
 import com.sneha.safeherapp.viewmodel.SosState
 import com.sneha.safeherapp.viewmodel.SosViewModel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 data class EmergencyContact(
@@ -51,7 +55,8 @@ data class EmergencyContact(
 @Composable
 fun UserHomeScreen(
     onLogout: () -> Unit,
-    onNavigateToFakeCall: () -> Unit
+    onNavigateToFakeCall: () -> Unit,
+    onNavigateToSettings: () -> Unit
 ) {
     val context = LocalContext.current
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
@@ -63,6 +68,11 @@ fun UserHomeScreen(
     val db = FirebaseFirestore.getInstance()
     val userId = auth.currentUser?.uid ?: ""
 
+    // Prevent navigation back to login
+    BackHandler {
+        (context as? Activity)?.finish()
+    }
+
     // State for emergency contacts
     var contacts by remember { mutableStateOf(listOf<EmergencyContact>()) }
     var isLoadingContacts by remember { mutableStateOf(true) }
@@ -71,6 +81,8 @@ fun UserHomeScreen(
     var contactName by remember { mutableStateOf("") }
     var contactPhone by remember { mutableStateOf("") }
     
+    var isFakeCallTriggered by remember { mutableStateOf(false) }
+
     val isSosEnabled = contacts.isNotEmpty()
 
     // Real-time Firestore Snapshot Listener
@@ -134,7 +146,7 @@ fun UserHomeScreen(
                     "SafeHer Menu",
                     modifier = Modifier.padding(16.dp),
                     style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.primary
+                    color = Color(0xFF6A3CC3)
                 )
                 NavigationDrawerItem(
                     label = { Text("Home") },
@@ -163,7 +175,12 @@ fun UserHomeScreen(
                 NavigationDrawerItem(
                     label = { Text("Settings") },
                     selected = false,
-                    onClick = { /* Navigate to Settings */ },
+                    onClick = { 
+                        scope.launch { 
+                            drawerState.close()
+                            onNavigateToSettings() 
+                        }
+                    },
                     icon = { Icon(Icons.Default.Settings, contentDescription = null) }
                 )
                 Spacer(modifier = Modifier.weight(1f))
@@ -189,17 +206,17 @@ fun UserHomeScreen(
                         Text(
                             "SafeHer",
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
+                            color = Color(0xFF6A3CC3)
                         )
                     },
                     navigationIcon = {
                         IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                            Icon(Icons.Default.Menu, contentDescription = "Menu")
+                            Icon(Icons.Default.Menu, contentDescription = "Menu", tint = Color(0xFF6A3CC3))
                         }
                     },
                     actions = {
                         IconButton(onClick = { /* Navigate to Profile */ }) {
-                            Icon(Icons.Default.AccountCircle, contentDescription = "Profile")
+                            Icon(Icons.Default.AccountCircle, contentDescription = "Profile", tint = Color(0xFF6A3CC3))
                         }
                     },
                     colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
@@ -274,7 +291,7 @@ fun UserHomeScreen(
                     if (!isSosEnabled && !isLoadingContacts) {
                         Text(
                             text = "Add an emergency contact to activate SOS",
-                            color = Color.Red.copy(alpha = 0.8f),
+                            color = Color.Red,
                             fontWeight = FontWeight.Bold,
                             fontSize = 14.sp
                         )
@@ -282,12 +299,12 @@ fun UserHomeScreen(
 
                     Spacer(modifier = Modifier.height(40.dp))
 
-                    // Emergency Contacts Card
+                    // Emergency Contacts Card (FIX 1)
                     Card(
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(28.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.95f)),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+                        shape = RoundedCornerShape(24.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
                     ) {
                         Column(modifier = Modifier.padding(20.dp)) {
                             Row(
@@ -311,13 +328,13 @@ fun UserHomeScreen(
                                     shape = RoundedCornerShape(12.dp),
                                     enabled = !isLoadingContacts,
                                     colors = ButtonDefaults.buttonColors(
-                                        containerColor = MaterialTheme.colorScheme.primary,
+                                        containerColor = Color(0xFF6A3CC3),
                                         contentColor = Color.White
                                     )
                                 ) {
                                     Icon(Icons.Default.Add, contentDescription = "Add Contact")
                                     Spacer(Modifier.width(4.dp))
-                                    Text("Add", color = Color.White)
+                                    Text("Add")
                                 }
                             }
 
@@ -350,7 +367,7 @@ fun UserHomeScreen(
                                             showAddDialog = true
                                         }
                                     )
-                                    HorizontalDivider(color = Color.LightGray.copy(alpha = 0.8f))
+                                    HorizontalDivider(color = Color.LightGray.copy(alpha = 0.5f))
                                 }
                             }
                         }
@@ -359,21 +376,60 @@ fun UserHomeScreen(
                     Spacer(modifier = Modifier.height(24.dp))
 
                     // Fake Call Feature
-                    OutlinedButton(
-                        onClick = onNavigateToFakeCall,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(56.dp),
-                        shape = RoundedCornerShape(16.dp),
-                        border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(width = 2.dp)
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Icon(Icons.AutoMirrored.Filled.PhoneCallback, contentDescription = null)
-                        Spacer(modifier = Modifier.width(12.dp))
+                        OutlinedButton(
+                            onClick = {
+                                if (!isFakeCallTriggered) {
+                                    isFakeCallTriggered = true
+                                    onNavigateToFakeCall()
+                                    scope.launch {
+                                        delay(2000)
+                                        isFakeCallTriggered = false
+                                    }
+                                }
+                            },
+                            enabled = !isFakeCallTriggered,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(56.dp),
+                            shape = RoundedCornerShape(16.dp),
+                            border = ButtonDefaults.outlinedButtonBorder(enabled = !isFakeCallTriggered).copy(width = 2.dp),
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                contentColor = Color(0xFF6A3CC3)
+                            )
+                        ) {
+                            Icon(Icons.AutoMirrored.Filled.PhoneCallback, contentDescription = null)
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Text(
+                                "Fake Call",
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        // (FIX 2) Tips Text
                         Text(
-                            "Fake Call",
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.primary
+                            text = "Tip:",
+                            fontWeight = FontWeight.Medium,
+                            fontSize = 14.sp,
+                            color = Color.Gray
+                        )
+                        Text(
+                            text = "• Record fake caller voices in Settings",
+                            fontSize = 13.sp,
+                            color = Color.DarkGray,
+                            textAlign = TextAlign.Center
+                        )
+                        Text(
+                            text = "• Go to Settings → Fake Call Settings to customize callers",
+                            fontSize = 13.sp,
+                            color = Color.DarkGray,
+                            textAlign = TextAlign.Center
                         )
                     }
                     
@@ -394,7 +450,8 @@ fun UserHomeScreen(
             Card(
                 modifier = Modifier.fillMaxWidth().padding(16.dp),
                 shape = RoundedCornerShape(24.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
             ) {
                 Column(
                     modifier = Modifier.padding(24.dp),
@@ -404,20 +461,18 @@ fun UserHomeScreen(
                         if (editingContactId == null) "Add Emergency Contact" else "Edit Emergency Contact", 
                         style = MaterialTheme.typography.titleLarge, 
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
+                        color = Color(0xFF6A3CC3)
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     
                     val dialogTextFieldColors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = Color.White,
-                        unfocusedTextColor = Color.White,
-                        cursorColor = Color.White,
-                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        focusedTextColor = Color.Black,
+                        unfocusedTextColor = Color.Black,
+                        cursorColor = Color(0xFF6A3CC3),
+                        focusedBorderColor = Color(0xFF6A3CC3),
                         unfocusedBorderColor = Color.Gray,
-                        focusedLabelColor = MaterialTheme.colorScheme.primary,
-                        unfocusedLabelColor = Color.LightGray,
-                        focusedPlaceholderColor = Color.LightGray,
-                        unfocusedPlaceholderColor = Color.Gray
+                        focusedLabelColor = Color(0xFF6A3CC3),
+                        unfocusedLabelColor = Color.DarkGray
                     )
 
                     OutlinedTextField(
@@ -429,7 +484,6 @@ fun UserHomeScreen(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
                         singleLine = true,
-                        textStyle = TextStyle(color = Color.White),
                         colors = dialogTextFieldColors
                     )
                     Spacer(modifier = Modifier.height(12.dp))
@@ -442,7 +496,6 @@ fun UserHomeScreen(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
                         singleLine = true,
-                        textStyle = TextStyle(color = Color.White),
                         colors = dialogTextFieldColors,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone)
                     )
@@ -457,7 +510,7 @@ fun UserHomeScreen(
                             contactName = ""
                             contactPhone = ""
                         }) {
-                            Text("Cancel", color = MaterialTheme.colorScheme.primary)
+                            Text("Cancel", color = Color(0xFF6A3CC3))
                         }
                         Spacer(modifier = Modifier.width(8.dp))
                         Button(
@@ -481,7 +534,8 @@ fun UserHomeScreen(
                                 contactPhone = ""
                             },
                             shape = RoundedCornerShape(12.dp),
-                            enabled = contactName.isNotBlank() && contactPhone.length >= 10
+                            enabled = contactName.isNotBlank() && contactPhone.length >= 10,
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6A3CC3))
                         ) {
                             Text("Save")
                         }
@@ -507,10 +561,10 @@ fun ContactItem(contact: EmergencyContact, onDelete: () -> Unit, onEdit: () -> U
         }
         Row {
             IconButton(onClick = onEdit) {
-                Icon(Icons.Default.Edit, contentDescription = "Edit", tint = Color.DarkGray)
+                Icon(Icons.Default.Edit, contentDescription = "Edit", tint = Color.Gray)
             }
             IconButton(onClick = onDelete) {
-                Icon(Icons.Default.Delete, contentDescription = "Delete", tint = Color.Red.copy(alpha = 0.8f))
+                Icon(Icons.Default.Delete, contentDescription = "Delete", tint = Color(0xFFE57373))
             }
         }
     }
