@@ -40,7 +40,6 @@ import com.sneha.safeherapp.ui.theme.SoftPink
 import com.sneha.safeherapp.viewmodel.SosState
 import com.sneha.safeherapp.viewmodel.SosViewModel
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.tasks.await
 
 data class EmergencyContact(
     val id: String = "",
@@ -50,7 +49,10 @@ data class EmergencyContact(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun UserHomeScreen(onLogout: () -> Unit) {
+fun UserHomeScreen(
+    onLogout: () -> Unit,
+    onNavigateToFakeCall: () -> Unit
+) {
     val context = LocalContext.current
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
@@ -71,31 +73,34 @@ fun UserHomeScreen(onLogout: () -> Unit) {
     
     val isSosEnabled = contacts.isNotEmpty()
 
-    // Function to fetch contacts from Firestore
-    fun fetchContacts() {
-        if (userId.isEmpty()) return
+    // Real-time Firestore Snapshot Listener
+    DisposableEffect(userId) {
+        if (userId.isEmpty()) return@DisposableEffect onDispose {}
+        
         isLoadingContacts = true
-        db.collection("users").document(userId).collection("contacts")
-            .get()
-            .addOnSuccessListener { result ->
-                contacts = result.map { doc ->
+        val listenerRegistration = db.collection("users").document(userId)
+            .collection("contacts")
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    isLoadingContacts = false
+                    Toast.makeText(context, "Error syncing contacts", Toast.LENGTH_SHORT).show()
+                    return@addSnapshotListener
+                }
+
+                contacts = snapshot?.documents?.map { doc ->
                     EmergencyContact(
                         id = doc.id,
                         name = doc.getString("name") ?: "",
                         phoneNumber = doc.getString("phoneNumber") ?: ""
                     )
-                }
+                } ?: emptyList()
+                
                 isLoadingContacts = false
             }
-            .addOnFailureListener {
-                isLoadingContacts = false
-                Toast.makeText(context, "Failed to load contacts", Toast.LENGTH_SHORT).show()
-            }
-    }
 
-    // Initial fetch
-    LaunchedEffect(Unit) {
-        fetchContacts()
+        onDispose {
+            listenerRegistration.remove()
+        }
     }
 
     // Permissions handling
@@ -304,11 +309,15 @@ fun UserHomeScreen(onLogout: () -> Unit) {
                                         showAddDialog = true 
                                     },
                                     shape = RoundedCornerShape(12.dp),
-                                    enabled = !isLoadingContacts
+                                    enabled = !isLoadingContacts,
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = MaterialTheme.colorScheme.primary,
+                                        contentColor = Color.White
+                                    )
                                 ) {
-                                    Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
+                                    Icon(Icons.Default.Add, contentDescription = "Add Contact")
                                     Spacer(Modifier.width(4.dp))
-                                    Text("Add")
+                                    Text("Add", color = Color.White)
                                 }
                             }
 
@@ -333,7 +342,6 @@ fun UserHomeScreen(onLogout: () -> Unit) {
                                             db.collection("users").document(userId)
                                                 .collection("contacts").document(contact.id)
                                                 .delete()
-                                                .addOnSuccessListener { fetchContacts() }
                                         },
                                         onEdit = {
                                             editingContactId = contact.id
@@ -352,7 +360,7 @@ fun UserHomeScreen(onLogout: () -> Unit) {
 
                     // Fake Call Feature
                     OutlinedButton(
-                        onClick = { /* Simulate Fake Call */ },
+                        onClick = onNavigateToFakeCall,
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(56.dp),
@@ -462,9 +470,9 @@ fun UserHomeScreen(onLogout: () -> Unit) {
                                 val contactsRef = db.collection("users").document(userId).collection("contacts")
                                 
                                 if (editingContactId == null) {
-                                    contactsRef.add(contactData).addOnSuccessListener { fetchContacts() }
+                                    contactsRef.add(contactData)
                                 } else {
-                                    contactsRef.document(editingContactId!!).set(contactData).addOnSuccessListener { fetchContacts() }
+                                    contactsRef.document(editingContactId!!).set(contactData)
                                 }
 
                                 showAddDialog = false

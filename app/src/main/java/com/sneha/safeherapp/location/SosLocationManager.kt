@@ -6,6 +6,7 @@ import android.location.Location
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
+import com.google.android.gms.location.CurrentLocationRequest
 import kotlinx.coroutines.tasks.await
 
 class SosLocationManager(context: Context) {
@@ -13,26 +14,23 @@ class SosLocationManager(context: Context) {
         LocationServices.getFusedLocationProviderClient(context)
 
     @SuppressLint("MissingPermission")
-    suspend fun getCurrentLocation(): Location? {
+    suspend fun getLastKnownLocation(): Location? {
         return try {
-            // Try last known location first for speed
-            val lastLocation = fusedLocationClient.lastLocation.await()
-            if (lastLocation != null && isLocationFresh(lastLocation)) {
-                lastLocation
-            } else {
-                // Request fresh high accuracy location
-                fusedLocationClient.getCurrentLocation(
-                    Priority.PRIORITY_HIGH_ACCURACY,
-                    null
-                ).await()
-            }
+            fusedLocationClient.lastLocation.await()
         } catch (e: Exception) {
             null
         }
     }
 
-    private fun isLocationFresh(location: Location): Boolean {
-        val age = System.currentTimeMillis() - location.time
-        return age < 60_000 // Less than 1 minute old
+    @SuppressLint("MissingPermission")
+    suspend fun getFreshLocation(): Location? {
+        return try {
+            val request = CurrentLocationRequest.Builder()
+                .setPriority(Priority.PRIORITY_HIGH_ACCURACY)
+                .build()
+            fusedLocationClient.getCurrentLocation(request, null).await()
+        } catch (e: Exception) {
+            null
+        }
     }
 }

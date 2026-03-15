@@ -1,6 +1,7 @@
 package com.sneha.safeherapp.viewmodel
 
 import android.content.Context
+import android.location.Location
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
@@ -35,52 +36,69 @@ class SosViewModel : ViewModel() {
                 val userDoc = db.collection("users").document(userId).get().await()
                 val userName = userDoc.getString("name") ?: "A SafeHer User"
 
-                // 2. Get Location
                 val locationManager = SosLocationManager(context)
-                val location = locationManager.getCurrentLocation()
-                val locationLink = if (location != null) {
-                    "https://maps.google.com/?q=${location.latitude},${location.longitude}"
-                } else {
-                    "Location unavailable"
-                }
-
+                
+                // 2. Immediate Last Known Location
+                val lastLocation = locationManager.getLastKnownLocation()
+                
                 // 3. Get Emergency Contacts
-                // Note: In current UI, contacts are local. 
-                // For SOS to work, they must be in Firestore.
-                // For now, let's assume they are stored under users/{userId}/contacts
                 val contactsSnapshot = db.collection("users").document(userId)
                     .collection("contacts").get().await()
                 
-                val message = """
-                    🚨 SAFEHER EMERGENCY ALERT 🚨
-                    
-                    $userName may be in danger and has triggered the SOS alert.
-                    
-                    📍 Live Location:
-                    $locationLink
-                    
-                    Please contact them immediately.
-                """.trimIndent()
-
-                var sentCount = 0
-                for (doc in contactsSnapshot.documents) {
-                    val phone = doc.getString("phoneNumber")
-                    if (!phone.isNullOrEmpty()) {
-                        SmsHelper.sendSms(phone, message)
-                        sentCount++
-                    }
+                if (contactsSnapshot.isEmpty) {
+                    _sosState.value = SosState.Error("No emergency contacts found.")
+                    return@launch
                 }
 
-                if (sentCount > 0) {
-                    _sosState.value = SosState.Success
-                } else {
-                    _sosState.value = SosState.Error("No emergency contacts found in your profile.")
+                // Initial Send with last known (or unavailable)
+                sendAlerts(userName, lastLocation, contactsSnapshot.documents)
+                _sosState.value = SosState.Success
+
+                // 4. Background: Request Fresh Location and update if needed
+                launch {
+                    val freshLocation = locationManager.getFreshLocation()
+                    if (freshLocation != null && (lastLocation == null || isSignificantlyDifferent(lastLocation, freshLocation))) {
+                        // Send update message if location improved
+                        sendAlerts(userName, freshLocation, contactsSnapshot.documents, isUpdate = true)
+                    }
                 }
 
             } catch (e: Exception) {
                 _sosState.value = SosState.Error(e.localizedMessage ?: "Failed to send SOS")
             }
         }
+    }
+
+    private fun sendAlerts(userName: String, location: Location?, contacts: List<com.google.firebase.firestore.DocumentSnapshot>, isUpdate: Boolean = false) {
+        val locationLink = if (location != null) {
+            "https://maps.google.com/?q=${location.latitude},${location.longitude}"
+        } else {
+            "Location currently unavailable"
+        }
+
+        val prefix = if (isUpdate) "📍 UPDATED LOCATION ALERT" else "🚨 SAFEHER EMERGENCY ALERT 🚨"
+        
+        val message = """
+            $prefix
+            
+            $userName ${if (isUpdate) "is still at" else "may be in danger and has triggered an SOS alert"}.
+            
+            📍 ${if (isUpdate) "Latest" else "Live"} Location:
+            $locationLink
+            
+            Please contact them immediately.
+        """.trimIndent()
+
+        for (doc in contacts) {
+            val phone = doc.getString("phoneNumber")
+            if (!phone.isNullOrEmpty()) {
+                SmsHelper.sendSms(phone, message)
+            }
+        }
+    }
+
+    private fun isSignificantlyDifferent(old: Location, new: Location): Boolean {
+        return old.distanceTo(new) > 50 // More than 50 meters difference
     }
 
     fun resetState() {

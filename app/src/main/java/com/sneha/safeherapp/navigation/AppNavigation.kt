@@ -16,6 +16,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.sneha.safeherapp.ui.auth.LoginScreen
 import com.sneha.safeherapp.ui.auth.SignupScreen
+import com.sneha.safeherapp.ui.fakecall.FakeCallScreen
 import com.sneha.safeherapp.ui.home.GuardianDashboard
 import com.sneha.safeherapp.ui.home.UserHomeScreen
 import com.sneha.safeherapp.viewmodel.AuthState
@@ -56,8 +57,6 @@ fun AppNavigation(context: Context) {
     }
 
     if (authState is AuthState.Idle || authState is AuthState.Loading && authState !is AuthState.Success) {
-        // Show a full-screen loader during initial check or background loading
-        // But only if we are not already navigating (Success)
         if (authState !is AuthState.Success) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()
@@ -85,10 +84,16 @@ fun AppNavigation(context: Context) {
             )
         }
         composable(Screen.UserHome.route) {
-            UserHomeScreen(onLogout = { authViewModel.logout() })
+            UserHomeScreen(
+                onLogout = { authViewModel.logout() },
+                onNavigateToFakeCall = { navController.navigate(Screen.FakeCall.route) }
+            )
         }
         composable(Screen.GuardianDashboard.route) {
             GuardianDashboard()
+        }
+        composable(Screen.FakeCall.route) {
+            FakeCallScreen(onBack = { navController.popBackStack() })
         }
     }
 }
