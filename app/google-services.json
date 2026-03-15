@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "847915101705",
+    "firebase_url": "https://safeherapp-5e559-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "safeherapp-5e559",
+    "storage_bucket": "safeherapp-5e559.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:847915101705:android:d3027ce3c58de7883892d8",
+        "android_client_info": {
+          "package_name": "com.sneha.safeherapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDUZaph6cs4VifMTh66acoPb-cgDscic2A"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
