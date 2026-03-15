@@ -28,7 +28,8 @@ import com.sneha.safeherapp.ui.theme.SoftPink
 @Composable
 fun SignupScreen(
     onNavigateToLogin: () -> Unit,
-    onSignupClick: (String, String, String, String) -> Unit
+    onSignupClick: (String, String, String, String) -> Unit,
+    isLoading: Boolean = false
 ) {
     var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
@@ -114,7 +115,8 @@ fun SignupScreen(
                         shape = RoundedCornerShape(16.dp),
                         leadingIcon = { Icon(Icons.Default.Person, contentDescription = null) },
                         colors = textFieldColors,
-                        singleLine = true
+                        singleLine = true,
+                        enabled = !isLoading
                     )
 
                     Spacer(modifier = Modifier.height(16.dp))
@@ -127,7 +129,8 @@ fun SignupScreen(
                         shape = RoundedCornerShape(16.dp),
                         leadingIcon = { Icon(Icons.Default.Email, contentDescription = null) },
                         colors = textFieldColors,
-                        singleLine = true
+                        singleLine = true,
+                        enabled = !isLoading
                     )
 
                     Spacer(modifier = Modifier.height(16.dp))
@@ -141,7 +144,8 @@ fun SignupScreen(
                         visualTransformation = PasswordVisualTransformation(),
                         leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
                         colors = textFieldColors,
-                        singleLine = true
+                        singleLine = true,
+                        enabled = !isLoading
                     )
 
                     Spacer(modifier = Modifier.height(24.dp))
@@ -164,13 +168,13 @@ fun SignupScreen(
                             text = "User",
                             isSelected = selectedRole == "User",
                             modifier = Modifier.weight(1f),
-                            onClick = { selectedRole = "User" }
+                            onClick = { if (!isLoading) selectedRole = "User" }
                         )
                         RoleButton(
                             text = "Guardian",
                             isSelected = selectedRole == "Guardian",
                             modifier = Modifier.weight(1f),
-                            onClick = { selectedRole = "Guardian" }
+                            onClick = { if (!isLoading) selectedRole = "Guardian" }
                         )
                     }
 
@@ -184,14 +188,19 @@ fun SignupScreen(
                         shape = RoundedCornerShape(16.dp),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = MaterialTheme.colorScheme.primary
-                        )
+                        ),
+                        enabled = !isLoading
                     ) {
-                        Text("Create Account", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                        if (isLoading) {
+                            CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
+                        } else {
+                            Text("Create Account", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                        }
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    TextButton(onClick = onNavigateToLogin) {
+                    TextButton(onClick = onNavigateToLogin, enabled = !isLoading) {
                         Text(
                             text = "Already have an account? Login",
                             color = MaterialTheme.colorScheme.primary,

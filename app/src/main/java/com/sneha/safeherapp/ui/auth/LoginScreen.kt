@@ -25,7 +25,8 @@ import com.sneha.safeherapp.ui.theme.SoftPink
 @Composable
 fun LoginScreen(
     onNavigateToSignup: () -> Unit,
-    onLoginClick: (String, String) -> Unit
+    onLoginClick: (String, String) -> Unit,
+    isLoading: Boolean = false
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -109,7 +110,8 @@ fun LoginScreen(
                         shape = RoundedCornerShape(16.dp),
                         leadingIcon = { Icon(Icons.Default.Email, contentDescription = null) },
                         colors = textFieldColors,
-                        singleLine = true
+                        singleLine = true,
+                        enabled = !isLoading
                     )
 
                     Spacer(modifier = Modifier.height(16.dp))
@@ -123,7 +125,8 @@ fun LoginScreen(
                         visualTransformation = PasswordVisualTransformation(),
                         leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
                         colors = textFieldColors,
-                        singleLine = true
+                        singleLine = true,
+                        enabled = !isLoading
                     )
 
                     Spacer(modifier = Modifier.height(32.dp))
@@ -136,14 +139,19 @@ fun LoginScreen(
                         shape = RoundedCornerShape(16.dp),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = MaterialTheme.colorScheme.primary
-                        )
+                        ),
+                        enabled = !isLoading
                     ) {
-                        Text("Login", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                        if (isLoading) {
+                            CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
+                        } else {
+                            Text("Login", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                        }
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    TextButton(onClick = onNavigateToSignup) {
+                    TextButton(onClick = onNavigateToSignup, enabled = !isLoading) {
                         Text(
                             text = "Don't have an account? Sign up",
                             color = MaterialTheme.colorScheme.primary,
