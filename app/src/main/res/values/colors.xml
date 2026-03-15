@@ -7,4 +7,10 @@
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+
+    <!-- SafeHer Launcher Icon Colors -->
+    <color name="icon_background_start">#E6E6FA</color> <!-- Lavender -->
+    <color name="icon_background_end">#F3E5F5</color>   <!-- Light Purple -->
+    <color name="icon_foreground_accent">#FFF0F5</color> <!-- Soft Pink -->
+    <color name="icon_primary">#673AB7</color>          <!-- Deep Purple -->
 </resources>
