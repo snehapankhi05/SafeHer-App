@@ -16,6 +16,13 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        val mapsApiKey = project.findProperty("MAPS_API_KEY") as String? ?: ""
+
+        buildConfigField(
+            "String",
+            "MAPS_API_KEY",
+            "\"$mapsApiKey\""
+        )
     }
 
     buildTypes {
@@ -33,6 +40,13 @@ android {
     }
     buildFeatures {
         compose = true
+    }
+    
+    configurations.all {
+        resolutionStrategy {
+            force("androidx.vectordrawable:vectordrawable:1.2.0")
+            force("androidx.vectordrawable:vectordrawable-animated:1.2.0")
+        }
     }
 }
 
@@ -56,6 +70,11 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.compose.material.icons.extended)
     implementation(libs.gson)
+    
+    // Google Maps & Places
+    implementation(libs.play.services.maps)
+    implementation(libs.maps.compose)
+    implementation(libs.places)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

@@ -1,19 +1,30 @@
 package com.sneha.safeherapp.ui.settings
 
+import android.widget.Toast
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import com.sneha.safeherapp.ui.theme.LightPurple
 import com.sneha.safeherapp.ui.theme.SoftPink
 
@@ -31,10 +42,20 @@ fun SimpleSettingsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(title, fontWeight = FontWeight.Bold) },
+                title = { 
+                    Text(
+                        text = title, 
+                        fontWeight = FontWeight.Bold,
+                        color = Color.Black
+                    ) 
+                },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack, 
+                            contentDescription = "Back",
+                            tint = Color.Black
+                        )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
@@ -83,7 +104,7 @@ fun AboutAppScreen(onBack: () -> Unit) {
     SimpleSettingsScreen(title = "About App", onBack = onBack) {
         Text(
             text = "SafeHer",
-            fontSize = 24.sp,
+            fontSize = 28.sp,
             fontWeight = FontWeight.Bold,
             color = Color(0xFF6A3CC3)
         )
@@ -95,6 +116,8 @@ fun AboutAppScreen(onBack: () -> Unit) {
         )
         Spacer(modifier = Modifier.height(24.dp))
         Text("Version 1.0.0", color = Color.Gray, fontSize = 14.sp)
+        Spacer(modifier = Modifier.height(8.dp))
+        Text("Designed with care for your safety.", color = Color.Gray, fontSize = 14.sp)
     }
 }
 
@@ -120,17 +143,151 @@ fun PrivacyPolicyScreen(onBack: () -> Unit) {
 
 @Composable
 fun ProfileScreen(onBack: () -> Unit) {
+    val context = LocalContext.current
+    val auth = FirebaseAuth.getInstance()
+    val db = FirebaseFirestore.getInstance()
+    val user = auth.currentUser
+    
+    var name by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf(user?.email ?: "") }
+    var isLoading by remember { mutableStateOf(true) }
+    var isSaving by remember { mutableStateOf(false) }
+
+    LaunchedEffect(user?.uid) {
+        if (user != null) {
+            db.collection("users").document(user.uid).get()
+                .addOnSuccessListener { document ->
+                    name = document.getString("name") ?: ""
+                    isLoading = false
+                }
+                .addOnFailureListener {
+                    isLoading = false
+                }
+        }
+    }
+
     SimpleSettingsScreen(title = "Profile", onBack = onBack) {
-        // Simple profile placeholder
-        Card(
+        Column(
             modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = Color.White),
-            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Column(modifier = Modifier.padding(24.dp)) {
-                Text("User Profile Info", fontWeight = FontWeight.Bold, fontSize = 18.sp)
-                Spacer(modifier = Modifier.height(16.dp))
-                Text("Account settings and personal details will appear here.", color = Color.DarkGray)
+            // Circular Profile Icon
+            Box(
+                modifier = Modifier
+                    .size(120.dp)
+                    .clip(CircleShape)
+                    .background(Color.White)
+                    .border(2.dp, Color(0xFF6A3CC3), CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Person,
+                    contentDescription = null,
+                    modifier = Modifier.size(80.dp),
+                    tint = Color(0xFF6A3CC3)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            if (isLoading) {
+                CircularProgressIndicator(color = Color(0xFF6A3CC3))
+            } else {
+                Text(
+                    text = name.ifBlank { "User" },
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Black
+                )
+                Text(
+                    text = email,
+                    fontSize = 16.sp,
+                    color = Color.Gray
+                )
+
+                Spacer(modifier = Modifier.height(32.dp))
+
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                ) {
+                    Column(modifier = Modifier.padding(24.dp)) {
+                        Text(
+                            "Personal Details",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 18.sp,
+                            color = Color(0xFF6A3CC3)
+                        )
+                        Spacer(modifier = Modifier.height(20.dp))
+
+                        OutlinedTextField(
+                            value = name,
+                            onValueChange = { name = it },
+                            label = { Text("Name") },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp),
+                            singleLine = true,
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedTextColor = Color.Black,
+                                unfocusedTextColor = Color.Black,
+                                cursorColor = Color(0xFF6A3CC3),
+                                focusedBorderColor = Color(0xFF6A3CC3),
+                                unfocusedBorderColor = Color.Gray,
+                                focusedLabelColor = Color(0xFF6A3CC3),
+                                unfocusedLabelColor = Color.DarkGray
+                            )
+                        )
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        OutlinedTextField(
+                            value = email,
+                            onValueChange = { },
+                            label = { Text("Email (Read-only)") },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp),
+                            singleLine = true,
+                            enabled = false,
+                            colors = OutlinedTextFieldDefaults.colors(
+                                disabledTextColor = Color.Gray,
+                                disabledBorderColor = Color.LightGray,
+                                disabledLabelColor = Color.Gray
+                            )
+                        )
+
+                        Spacer(modifier = Modifier.height(24.dp))
+
+                        Button(
+                            onClick = {
+                                if (name.isNotBlank() && user != null) {
+                                    isSaving = true
+                                    db.collection("users").document(user.uid)
+                                        .update("name", name)
+                                        .addOnSuccessListener {
+                                            isSaving = false
+                                            Toast.makeText(context, "Profile Updated!", Toast.LENGTH_SHORT).show()
+                                        }
+                                        .addOnFailureListener {
+                                            isSaving = false
+                                            Toast.makeText(context, "Update Failed", Toast.LENGTH_SHORT).show()
+                                        }
+                                }
+                            },
+                            modifier = Modifier.fillMaxWidth().height(50.dp),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6A3CC3)),
+                            enabled = !isSaving
+                        ) {
+                            if (isSaving) {
+                                CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
+                            } else {
+                                Text("Save Changes", fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    }
+                }
             }
         }
     }

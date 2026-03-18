@@ -42,10 +42,15 @@ fun EmergencyContactsScreen(
     val contacts = listOf(
         PredefinedContact("Police", "100", Icons.Default.LocalPolice),
         PredefinedContact("Ambulance", "108", Icons.Default.LocalHospital),
-        PredefinedContact("Fire", "101", Icons.Default.FireTruck),
+        PredefinedContact("Fire Brigade", "101", Icons.Default.FireTruck),
+        PredefinedContact("National Emergency", "112", Icons.Default.Emergency),
         PredefinedContact("Women Helpline", "1091", Icons.Default.SupportAgent),
-        PredefinedContact("Emergency", "112", Icons.Default.Emergency),
-        PredefinedContact("Domestic Violence", "181", Icons.Default.GppBad)
+        PredefinedContact("Domestic Violence", "181", Icons.Default.GppBad),
+        PredefinedContact("Women Distress", "1090", Icons.Default.RecordVoiceOver),
+        PredefinedContact("Child Helpline", "1098", Icons.Default.ChildCare),
+        PredefinedContact("Mental Health Helpline", "9152987821", Icons.Default.Psychology),
+        PredefinedContact("Traffic Police", "103", Icons.Default.Traffic),
+        PredefinedContact("Animal Helpline", "9820122602", Icons.Default.Pets)
     )
 
     Scaffold(
@@ -89,7 +94,7 @@ fun EmergencyContactsScreen(
                     .padding(24.dp)
             ) {
                 Card(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().weight(1f, fill = false),
                     shape = RoundedCornerShape(24.dp),
                     colors = CardDefaults.cardColors(containerColor = Color.White),
                     elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)

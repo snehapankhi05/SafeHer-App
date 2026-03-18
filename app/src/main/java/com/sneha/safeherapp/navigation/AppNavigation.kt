@@ -18,12 +18,15 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.sneha.safeherapp.ui.auth.LoginScreen
 import com.sneha.safeherapp.ui.auth.SignupScreen
+import com.sneha.safeherapp.ui.chatbot.ChatbotScreen
+import com.sneha.safeherapp.ui.contacts.EmergencyContactsScreen
 import com.sneha.safeherapp.ui.fakecall.FakeCallScreen
 import com.sneha.safeherapp.ui.fakecall.VoiceRecorderScreen
 import com.sneha.safeherapp.ui.home.GuardianDashboard
 import com.sneha.safeherapp.ui.home.UserHomeScreen
-import com.sneha.safeherapp.ui.settings.FakeCallSettingsScreen
-import com.sneha.safeherapp.ui.settings.SettingsScreen
+import com.sneha.safeherapp.ui.map.MapLandingScreen
+import com.sneha.safeherapp.ui.map.MapScreen
+import com.sneha.safeherapp.ui.settings.*
 import com.sneha.safeherapp.util.FakeCallPrefs
 import com.sneha.safeherapp.viewmodel.AuthState
 import com.sneha.safeherapp.viewmodel.AuthViewModel
@@ -35,17 +38,21 @@ fun AppNavigation(context: Context) {
     val authState by authViewModel.authState
 
     LaunchedEffect(authState) {
+        val currentRoute = navController.currentBackStackEntry?.destination?.route
+        
         when (authState) {
             is AuthState.Success -> {
-                val role = (authState as AuthState.Success).role
-                val targetRoute = if (role.equals("Guardian", ignoreCase = true)) {
-                    Screen.GuardianDashboard.route
-                } else {
-                    Screen.UserHome.route
-                }
-                
-                navController.navigate(targetRoute) {
-                    popUpTo(Screen.Login.route) { inclusive = true }
+                if (currentRoute == Screen.Login.route || currentRoute == Screen.Signup.route || currentRoute == null) {
+                    val role = (authState as AuthState.Success).role
+                    val targetRoute = if (role.equals("Guardian", ignoreCase = true)) {
+                        Screen.GuardianDashboard.route
+                    } else {
+                        Screen.UserHome.route
+                    }
+                    
+                    navController.navigate(targetRoute) {
+                        popUpTo(Screen.Login.route) { inclusive = true }
+                    }
                 }
             }
             is AuthState.Error -> {
@@ -53,8 +60,10 @@ fun AppNavigation(context: Context) {
                 authViewModel.resetState()
             }
             is AuthState.Unauthenticated -> {
-                navController.navigate(Screen.Login.route) {
-                    popUpTo(0) { inclusive = true }
+                if (currentRoute != Screen.Login.route && currentRoute != Screen.Signup.route) {
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
                 }
             }
             else -> {}
@@ -92,7 +101,11 @@ fun AppNavigation(context: Context) {
             UserHomeScreen(
                 onLogout = { authViewModel.logout() },
                 onNavigateToFakeCall = { navController.navigate(Screen.FakeCall.route) },
-                onNavigateToSettings = { navController.navigate(Screen.Settings.route) }
+                onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
+                onNavigateToMap = { navController.navigate(Screen.MapLanding.route) },
+                onNavigateToEmergencyContacts = { navController.navigate(Screen.EmergencyContacts.route) },
+                onNavigateToProfile = { navController.navigate(Screen.Profile.route) },
+                onNavigateToChatbot = { navController.navigate(Screen.Chatbot.route) }
             )
         }
         composable(Screen.GuardianDashboard.route) {
@@ -102,7 +115,47 @@ fun AppNavigation(context: Context) {
             FakeCallScreen(onBack = { navController.popBackStack() })
         }
         composable(Screen.Settings.route) {
-            SettingsScreen(navController)
+            SettingsScreen(
+                navController = navController,
+                onLogout = { authViewModel.logout() }
+            )
+        }
+        composable(Screen.Profile.route) {
+            ProfileScreen(onBack = { navController.popBackStack() })
+        }
+        composable(Screen.HelpCenter.route) {
+            HelpCenterScreen(onBack = { navController.popBackStack() })
+        }
+        composable(Screen.About.route) {
+            AboutAppScreen(onBack = { navController.popBackStack() })
+        }
+        composable(Screen.PrivacyPolicy.route) {
+            PrivacyPolicyScreen(onBack = { navController.popBackStack() })
+        }
+        composable(Screen.Chatbot.route) {
+            ChatbotScreen(onBack = { navController.popBackStack() })
+        }
+        composable(Screen.EmergencyContacts.route) {
+            EmergencyContactsScreen(onBack = { navController.popBackStack() })
+        }
+        composable(Screen.MapLanding.route) {
+            MapLandingScreen(
+                onOpenMap = { category ->
+                    navController.navigate(Screen.Map.createRoute(category))
+                }
+            )
+        }
+        composable(
+            route = Screen.Map.route,
+            arguments = listOf(navArgument("category") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val category = backStackEntry.arguments?.getString("category")?.let { 
+                if (it == "none") null else it 
+            }
+            MapScreen(
+                category = category,
+                onBack = { navController.popBackStack() }
+            )
         }
         composable(Screen.FakeCallSettings.route) {
             FakeCallSettingsScreen(

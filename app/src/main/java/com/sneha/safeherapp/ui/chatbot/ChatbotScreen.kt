@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -58,7 +59,7 @@ fun ChatbotScreen(onBack: () -> Unit) {
             modifier = Modifier
                 .fillMaxSize()
                 .background(gradient)
-                .padding(innerPadding)
+                .padding(top = innerPadding.calculateTopPadding()) // Fixed: Removed bottom padding from Scaffold here
         ) {
             Column(modifier = Modifier.fillMaxSize()) {
                 LazyColumn(
@@ -75,18 +76,18 @@ fun ChatbotScreen(onBack: () -> Unit) {
                     }
                 }
 
-                // Input Area
+                // Input Area - Sticks to keyboard
                 Surface(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .navigationBarsPadding() // Fixed: Handle system navigation bar
+                        .imePadding(), // Fixed: Handle keyboard properly
                     color = Color.White,
                     tonalElevation = 8.dp,
                     shadowElevation = 8.dp
                 ) {
                     Row(
-                        modifier = Modifier
-                            .padding(16.dp)
-                            .navigationBarsPadding()
-                            .imePadding(),
+                        modifier = Modifier.padding(16.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         OutlinedTextField(
@@ -97,7 +98,9 @@ fun ChatbotScreen(onBack: () -> Unit) {
                             shape = RoundedCornerShape(24.dp),
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedBorderColor = Color(0xFF6A3CC3),
-                                unfocusedBorderColor = Color.LightGray
+                                unfocusedBorderColor = Color.LightGray,
+                                focusedTextColor = Color.Black,
+                                unfocusedTextColor = Color.Black
                             ),
                             maxLines = 3
                         )

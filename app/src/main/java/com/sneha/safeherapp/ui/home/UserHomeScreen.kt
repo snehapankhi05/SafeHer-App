@@ -56,7 +56,11 @@ data class EmergencyContact(
 fun UserHomeScreen(
     onLogout: () -> Unit,
     onNavigateToFakeCall: () -> Unit,
-    onNavigateToSettings: () -> Unit
+    onNavigateToSettings: () -> Unit,
+    onNavigateToMap: () -> Unit,
+    onNavigateToEmergencyContacts: () -> Unit,
+    onNavigateToProfile: () -> Unit,
+    onNavigateToChatbot: () -> Unit
 ) {
     val context = LocalContext.current
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
@@ -157,19 +161,34 @@ fun UserHomeScreen(
                 NavigationDrawerItem(
                     label = { Text("Map") },
                     selected = false,
-                    onClick = { /* Navigate to Map */ },
+                    onClick = { 
+                        scope.launch { 
+                            drawerState.close()
+                            onNavigateToMap() 
+                        }
+                    },
                     icon = { Icon(Icons.Default.LocationOn, contentDescription = null) }
                 )
                 NavigationDrawerItem(
                     label = { Text("Emergency Contacts") },
                     selected = false,
-                    onClick = { /* Navigate to Contacts */ },
+                    onClick = { 
+                        scope.launch { 
+                            drawerState.close()
+                            onNavigateToEmergencyContacts()
+                        }
+                    },
                     icon = { Icon(Icons.Default.Contacts, contentDescription = null) }
                 )
                 NavigationDrawerItem(
                     label = { Text("Chatbot") },
                     selected = false,
-                    onClick = { /* Navigate to Chatbot */ },
+                    onClick = { 
+                        scope.launch { 
+                            drawerState.close()
+                            onNavigateToChatbot()
+                        }
+                    },
                     icon = { Icon(Icons.AutoMirrored.Filled.Chat, contentDescription = null) }
                 )
                 NavigationDrawerItem(
@@ -215,7 +234,7 @@ fun UserHomeScreen(
                         }
                     },
                     actions = {
-                        IconButton(onClick = { /* Navigate to Profile */ }) {
+                        IconButton(onClick = onNavigateToProfile) {
                             Icon(Icons.Default.AccountCircle, contentDescription = "Profile", tint = Color(0xFF6A3CC3))
                         }
                     },
@@ -299,7 +318,7 @@ fun UserHomeScreen(
 
                     Spacer(modifier = Modifier.height(40.dp))
 
-                    // Emergency Contacts Card (FIX 1)
+                    // Emergency Contacts Card
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(24.dp),
@@ -313,7 +332,7 @@ fun UserHomeScreen(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(
-                                    text = "Emergency Contacts",
+                                    text = "Your Trusted Contacts",
                                     fontSize = 18.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = Color.Black
@@ -375,6 +394,21 @@ fun UserHomeScreen(
 
                     Spacer(modifier = Modifier.height(24.dp))
 
+                    // Quick Action: Public Emergency Contacts
+                    OutlinedButton(
+                        onClick = onNavigateToEmergencyContacts,
+                        modifier = Modifier.fillMaxWidth().height(56.dp),
+                        shape = RoundedCornerShape(16.dp),
+                        border = ButtonDefaults.outlinedButtonBorder.copy(width = 2.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF6A3CC3))
+                    ) {
+                        Icon(Icons.Default.Emergency, contentDescription = null)
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text("Public Help Numbers", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                    }
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
                     // Fake Call Feature
                     Column(
                         modifier = Modifier.fillMaxWidth(),
@@ -412,7 +446,7 @@ fun UserHomeScreen(
 
                         Spacer(modifier = Modifier.height(12.dp))
 
-                        // (FIX 2) Tips Text
+                        // Tips Text
                         Text(
                             text = "Tip:",
                             fontWeight = FontWeight.Medium,
@@ -421,12 +455,6 @@ fun UserHomeScreen(
                         )
                         Text(
                             text = "• Record fake caller voices in Settings",
-                            fontSize = 13.sp,
-                            color = Color.DarkGray,
-                            textAlign = TextAlign.Center
-                        )
-                        Text(
-                            text = "• Go to Settings → Fake Call Settings to customize callers",
                             fontSize = 13.sp,
                             color = Color.DarkGray,
                             textAlign = TextAlign.Center
