@@ -16,9 +16,23 @@ sealed class Screen(val route: String) {
     object VoiceRecorder : Screen("voice_recorder") {
         fun createRoute(profileId: String) = "voice_recorder/$profileId"
     }
-    object Map : Screen("map/{category}") {
-        fun createRoute(category: String?) = if (category != null) "map/$category" else "map/none"
+    object Map : Screen("map/{category}?lat={lat}&lng={lng}&reason={reason}&level={level}") {
+        fun createRoute(category: String?, lat: Double? = null, lng: Double? = null, reason: String? = null, level: String? = null): String {
+            val cat = category ?: "none"
+            var path = "map/$cat"
+            val params = mutableListOf<String>()
+            if (lat != null) params.add("lat=$lat")
+            if (lng != null) params.add("lng=$lng")
+            if (reason != null) params.add("reason=$reason")
+            if (level != null) params.add("level=$level")
+            
+            if (params.isNotEmpty()) {
+                path += "?" + params.joinToString("&")
+            }
+            return path
+        }
     }
     object MapLanding : Screen("map_landing")
     object EmergencyContacts : Screen("emergency_contacts")
+    object Reports : Screen("reports")
 }

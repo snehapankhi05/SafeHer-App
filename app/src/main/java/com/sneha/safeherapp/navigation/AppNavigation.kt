@@ -26,6 +26,7 @@ import com.sneha.safeherapp.ui.home.GuardianDashboard
 import com.sneha.safeherapp.ui.home.UserHomeScreen
 import com.sneha.safeherapp.ui.map.MapLandingScreen
 import com.sneha.safeherapp.ui.map.MapScreen
+import com.sneha.safeherapp.ui.map.ReportsScreen
 import com.sneha.safeherapp.ui.settings.*
 import com.sneha.safeherapp.util.FakeCallPrefs
 import com.sneha.safeherapp.viewmodel.AuthState
@@ -140,21 +141,55 @@ fun AppNavigation(context: Context) {
         }
         composable(Screen.MapLanding.route) {
             MapLandingScreen(
-                onOpenMap = { category ->
-                    navController.navigate(Screen.Map.createRoute(category))
+                onOpenMap = {
+                    navController.navigate(Screen.Map.createRoute(null))
+                },
+                onViewReports = {
+                    navController.navigate(Screen.Reports.route)
                 }
             )
         }
         composable(
             route = Screen.Map.route,
-            arguments = listOf(navArgument("category") { type = NavType.StringType })
+            arguments = listOf(
+                navArgument("category") { type = NavType.StringType },
+                navArgument("lat") { type = NavType.StringType; nullable = true },
+                navArgument("lng") { type = NavType.StringType; nullable = true },
+                navArgument("reason") { type = NavType.StringType; nullable = true },
+                navArgument("level") { type = NavType.StringType; nullable = true }
+            )
         ) { backStackEntry ->
             val category = backStackEntry.arguments?.getString("category")?.let { 
                 if (it == "none") null else it 
             }
+            val lat = backStackEntry.arguments?.getString("lat")?.toDoubleOrNull()
+            val lng = backStackEntry.arguments?.getString("lng")?.toDoubleOrNull()
+            val reason = backStackEntry.arguments?.getString("reason")
+            val level = backStackEntry.arguments?.getString("level")
+            
             MapScreen(
                 category = category,
+                initialLat = lat,
+                initialLng = lng,
+                initialReason = reason,
+                initialLevel = level,
                 onBack = { navController.popBackStack() }
+            )
+        }
+        composable(Screen.Reports.route) {
+            ReportsScreen(
+                onBack = { navController.popBackStack() },
+                onReportClick = { report ->
+                    navController.navigate(
+                        Screen.Map.createRoute(
+                            category = null,
+                            lat = report.latitude,
+                            lng = report.longitude,
+                            reason = report.reason,
+                            level = report.alertLevel
+                        )
+                    )
+                }
             )
         }
         composable(Screen.FakeCallSettings.route) {

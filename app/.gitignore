@@ -1,1 +1,44 @@
+*.iml
+.gradle
+/local.properties
+/.idea/caches
+/.idea/libraries
+/.idea/modules.xml
+/.idea/workspace.xml
+/.idea/navEditor.xml
+/.idea/assetWizardSettings.xml
+.DS_Store
 /build
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+*.env
+service-account*.json
+# Android
+
+/.idea
+
+
+# Kotlin
+*.class
+*.log
+
+# Gradle
+.gradle/
+build/
+
+# Android Studio
+.idea/
+
+# Firebase
+google-services.json
+
+# Secrets
+*.keystore
+*.jks
+*.pem
+*.key
+
+# OS
+Thumbs.db
