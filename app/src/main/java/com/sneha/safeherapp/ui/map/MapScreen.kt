@@ -49,6 +49,7 @@ import com.google.android.gms.maps.model.*
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.maps.android.compose.*
+import com.sneha.safeherapp.BuildConfig
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -205,7 +206,7 @@ fun MapScreen(
         }
     }
 
-    // STEP 2 & 3: Safety Alert Check when searching/selecting destination
+    // Safety Alert Check when searching/selecting destination
     LaunchedEffect(selectedLocation, reports) {
         if (selectedLocation != null && !hasShownAlertForCurrentTarget) {
             val nearbyReports = reports.filter { report ->
@@ -424,7 +425,7 @@ fun MapScreen(
             }
         }
 
-        // ISSUE 1: Fixed FAB Position
+        // FAB stack
         Column(
             modifier = Modifier
                 .align(Alignment.BottomEnd)
@@ -440,7 +441,6 @@ fun MapScreen(
                 shape = CircleShape
             ) { Icon(Icons.AutoMirrored.Filled.List, contentDescription = "Nearby Reports") }
             
-            // ISSUE 1: Report Danger above Location button
             ExtendedFloatingActionButton(
                 onClick = { showReportOptions = true }, 
                 containerColor = Color(0xFFD32F2F), 
@@ -594,7 +594,7 @@ private fun getCurrentLocation(context: Context, fusedLocationClient: com.google
 private fun getSearchSuggestions(context: Context, query: String): List<PlaceSuggestion> { return try { val geocoder = Geocoder(context); val addresses = geocoder.getFromLocationName(query, 5); addresses?.map { addr -> PlaceSuggestion(mainText = addr.featureName ?: addr.thoroughfare ?: "Unknown Place", fullAddress = addr.getAddressLine(0) ?: "", latLng = LatLng(addr.latitude, addr.longitude)) } ?: emptyList() } catch (e: Exception) { emptyList() } }
 
 private suspend fun fetchNearbyPlacesAPI(context: Context, type: String, location: LatLng): List<PlaceSuggestion> {
-    val apiKey = "AIzaSyCU6cXUUWHviFPaUAiKuHZytmBCZLh8E_4"
+    val apiKey = BuildConfig.MAPS_API_KEY
     val url = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${location.latitude},${location.longitude}&radius=3000&type=$type&key=$apiKey"
     
     Log.d("MapScreen", "Fetching Nearby: $url")

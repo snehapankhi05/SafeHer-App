@@ -18,6 +18,7 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         val mapsApiKey = project.findProperty("MAPS_API_KEY") as String? ?: ""
+        buildConfigField("String", "MAPS_API_KEY", "\"$mapsApiKey\"")
         manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey
     }
 
@@ -37,6 +38,18 @@ android {
     buildFeatures {
         compose = true
         buildConfig = true
+    }
+    val mapsApiKey: String = project.findProperty("MAPS_API_KEY") as String? ?: ""
+
+    buildTypes {
+        debug {
+            buildConfigField("String", "MAPS_API_KEY", "\"$mapsApiKey\"")
+            manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey
+        }
+        release {
+            buildConfigField("String", "MAPS_API_KEY", "\"$mapsApiKey\"")
+            manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey
+        }
     }
     
     configurations.all {
