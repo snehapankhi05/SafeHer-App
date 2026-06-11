@@ -22,8 +22,7 @@ import com.sneha.safeherapp.ui.chatbot.ChatbotScreen
 import com.sneha.safeherapp.ui.contacts.EmergencyContactsScreen
 import com.sneha.safeherapp.ui.fakecall.FakeCallScreen
 import com.sneha.safeherapp.ui.fakecall.VoiceRecorderScreen
-import com.sneha.safeherapp.ui.home.GuardianDashboard
-import com.sneha.safeherapp.ui.home.UserHomeScreen
+import com.sneha.safeherapp.ui.home.*
 import com.sneha.safeherapp.ui.map.MapLandingScreen
 import com.sneha.safeherapp.ui.map.MapScreen
 import com.sneha.safeherapp.ui.map.ReportsScreen
@@ -46,7 +45,7 @@ fun AppNavigation(context: Context) {
                 if (currentRoute == Screen.Login.route || currentRoute == Screen.Signup.route || currentRoute == null) {
                     val role = (authState as AuthState.Success).role
                     val targetRoute = if (role.equals("Guardian", ignoreCase = true)) {
-                        Screen.GuardianDashboard.route
+                        Screen.GuardianMain.route
                     } else {
                         Screen.UserHome.route
                     }
@@ -106,11 +105,29 @@ fun AppNavigation(context: Context) {
                 onNavigateToMap = { navController.navigate(Screen.MapLanding.route) },
                 onNavigateToEmergencyContacts = { navController.navigate(Screen.EmergencyContacts.route) },
                 onNavigateToProfile = { navController.navigate(Screen.Profile.route) },
-                onNavigateToChatbot = { navController.navigate(Screen.Chatbot.route) }
+                onNavigateToChatbot = { navController.navigate(Screen.Chatbot.route) },
+                onNavigateToConnectGuardian = { navController.navigate(Screen.ConnectGuardian.route) }
             )
         }
-        composable(Screen.GuardianDashboard.route) {
-            GuardianDashboard()
+        composable(Screen.ConnectGuardian.route) {
+            ConnectGuardianScreen(
+                onBack = { navController.popBackStack() },
+                onSuccess = { 
+                    navController.popBackStack()
+                    Toast.makeText(context, "Guardian connected successfully!", Toast.LENGTH_LONG).show()
+                }
+            )
+        }
+        composable(Screen.GuardianMain.route) {
+            GuardianMainScreen(
+                onLogout = { authViewModel.logout() },
+                onNavigateToProfile = { navController.navigate(Screen.Profile.route) },
+                onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
+                onNavigateToAddChild = { navController.navigate(Screen.AddChild.route) }
+            )
+        }
+        composable(Screen.AddChild.route) {
+            AddChildScreen(onBack = { navController.popBackStack() })
         }
         composable(Screen.FakeCall.route) {
             FakeCallScreen(onBack = { navController.popBackStack() })
@@ -216,6 +233,37 @@ fun AppNavigation(context: Context) {
                     FakeCallPrefs.saveProfiles(context, updated)
                     navController.popBackStack()
                 }
+            )
+        }
+        composable(
+            route = Screen.GuardianHome.route
+        ) {
+            GuardianMainScreen(
+                onLogout = { authViewModel.logout() },
+                onNavigateToProfile = { navController.navigate(Screen.Profile.route) },
+                onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
+                onNavigateToAddChild = { navController.navigate(Screen.AddChild.route) }
+            )
+        }
+        composable(
+            route = Screen.ChildDetail.route,
+            arguments = listOf(navArgument("childId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val childId = backStackEntry.arguments?.getString("childId") ?: ""
+            ChildDetailScreen(
+                childId = childId,
+                onBack = { navController.popBackStack() },
+                onNavigateToAddPlace = { id -> navController.navigate(Screen.AddPlace.createRoute(id)) }
+            )
+        }
+        composable(
+            route = Screen.AddPlace.route,
+            arguments = listOf(navArgument("childId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val childId = backStackEntry.arguments?.getString("childId") ?: ""
+            AddPlaceScreen(
+                childId = childId,
+                onBack = { navController.popBackStack() }
             )
         }
     }

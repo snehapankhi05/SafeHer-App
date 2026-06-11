@@ -5,6 +5,22 @@ sealed class Screen(val route: String) {
     object Signup : Screen("signup")
     object UserHome : Screen("user_home")
     object GuardianDashboard : Screen("guardian_dashboard")
+    object GuardianMain : Screen("guardian_main")
+    object GuardianHome : Screen("guardian_home")
+    object GuardianChildren : Screen("guardian_children")
+    object GuardianNotifications : Screen("guardian_notifications")
+    object GuardianSettings : Screen("guardian_settings")
+    object GuardianProfile : Screen("guardian_profile")
+    object AddChild : Screen("add_child")
+    object ChildDetail : Screen("child_detail/{childId}") {
+        fun createRoute(childId: String) = "child_detail/$childId"
+    }
+    object AddPlace : Screen("add_place/{childId}") {
+        fun createRoute(childId: String) = "add_place/$childId"
+    }
+
+    object ConnectGuardian : Screen("connect_guardian")
+
     object FakeCall : Screen("fake_call")
     object Settings : Screen("settings")
     object FakeCallSettings : Screen("fake_call_settings")

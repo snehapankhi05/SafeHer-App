@@ -112,7 +112,8 @@ fun AboutAppScreen(onBack: () -> Unit) {
         Text(
             text = "SafeHer is a comprehensive women's safety application designed to provide security and peace of mind. Our mission is to leverage technology to create a safer environment for everyone.",
             fontSize = 16.sp,
-            lineHeight = 24.sp
+            lineHeight = 24.sp,
+            color = Color.Black
         )
         Spacer(modifier = Modifier.height(24.dp))
         Text("Version 1.0.0", color = Color.Gray, fontSize = 14.sp)
@@ -127,7 +128,8 @@ fun PrivacyPolicyScreen(onBack: () -> Unit) {
         Text(
             text = "Your privacy is our priority.",
             fontWeight = FontWeight.Bold,
-            fontSize = 18.sp
+            fontSize = 18.sp,
+            color = Color.Black
         )
         Spacer(modifier = Modifier.height(16.dp))
         Text(
@@ -136,7 +138,8 @@ fun PrivacyPolicyScreen(onBack: () -> Unit) {
                    "3. Contacts: We access your contacts only to allow you to select emergency responders.\n\n" +
                    "4. Audio: Microphone access is used exclusively for recording fake caller voices if you choose to use that feature.",
             fontSize = 16.sp,
-            lineHeight = 24.sp
+            lineHeight = 24.sp,
+            color = Color.Black
         )
     }
 }
@@ -157,7 +160,7 @@ fun ProfileScreen(onBack: () -> Unit) {
         if (user != null) {
             db.collection("users").document(user.uid).get()
                 .addOnSuccessListener { document ->
-                    name = document.getString("name") ?: ""
+                    name = document.getString("fullName") ?: document.getString("name") ?: ""
                     isLoading = false
                 }
                 .addOnFailureListener {
@@ -264,7 +267,7 @@ fun ProfileScreen(onBack: () -> Unit) {
                                 if (name.isNotBlank() && user != null) {
                                     isSaving = true
                                     db.collection("users").document(user.uid)
-                                        .update("name", name)
+                                        .update("fullName", name) // Correcting field name if needed
                                         .addOnSuccessListener {
                                             isSaving = false
                                             Toast.makeText(context, "Profile Updated!", Toast.LENGTH_SHORT).show()
@@ -277,13 +280,16 @@ fun ProfileScreen(onBack: () -> Unit) {
                             },
                             modifier = Modifier.fillMaxWidth().height(50.dp),
                             shape = RoundedCornerShape(12.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6A3CC3)),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFF6A3CC3),
+                                contentColor = Color.White
+                            ),
                             enabled = !isSaving
                         ) {
                             if (isSaving) {
                                 CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
                             } else {
-                                Text("Save Changes", fontWeight = FontWeight.Bold)
+                                Text("Save Changes", fontWeight = FontWeight.Bold, color = Color.White)
                             }
                         }
                     }

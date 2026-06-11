@@ -76,8 +76,8 @@ fun FakeCallSettingsScreen(
                         tempName = ""
                         showAddEditDialog = true
                     },
-                    icon = { Icon(Icons.Default.Add, contentDescription = null) },
-                    text = { Text("Add Profile") },
+                    icon = { Icon(Icons.Default.Add, contentDescription = null, tint = Color.White) },
+                    text = { Text("Add Profile", color = Color.White) },
                     containerColor = Color(0xFF6A3CC3),
                     contentColor = Color.White
                 )
@@ -135,10 +135,11 @@ fun FakeCallSettingsScreen(
     if (showAddEditDialog) {
         AlertDialog(
             onDismissRequest = { showAddEditDialog = false },
+            containerColor = Color.White,
             title = { 
                 Text(
                     text = if (editingProfile == null) "Add Profile" else "Edit Profile", 
-                    color = Color.White,
+                    color = Color.Black,
                     fontWeight = FontWeight.Bold,
                     fontSize = 20.sp
                 ) 
@@ -151,23 +152,23 @@ fun FakeCallSettingsScreen(
                         label = { 
                             Text(
                                 "Caller Name",
-                                color = Color.LightGray
+                                color = Color.DarkGray
                             ) 
                         },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth(),
                         textStyle = TextStyle(
-                            color = Color.White,
+                            color = Color.Black,
                             fontSize = 16.sp
                         ),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedTextColor = Color.White,
-                            unfocusedTextColor = Color.White,
-                            cursorColor = Color.White,
+                            focusedTextColor = Color.Black,
+                            unfocusedTextColor = Color.Black,
+                            cursorColor = Color(0xFF6A3CC3),
                             focusedBorderColor = Color(0xFF6A3CC3),
                             unfocusedBorderColor = Color.Gray,
                             focusedLabelColor = Color(0xFF6A3CC3),
-                            unfocusedLabelColor = Color.LightGray
+                            unfocusedLabelColor = Color.DarkGray
                         )
                     )
                     
@@ -191,7 +192,7 @@ fun FakeCallSettingsScreen(
                         ) {
                             Icon(Icons.Default.Mic, contentDescription = null, tint = Color.White)
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text("Record Voice", fontWeight = FontWeight.Medium)
+                            Text("Record Voice", fontWeight = FontWeight.Medium, color = Color.White)
                         }
                         if (editingProfile?.audioPath != null) {
                             Text(
@@ -205,7 +206,7 @@ fun FakeCallSettingsScreen(
                     } else {
                         Text(
                             text = "Save profile first to record voice.", 
-                            color = Color.LightGray, 
+                            color = Color.DarkGray, 
                             fontSize = 14.sp,
                             modifier = Modifier.padding(top = 8.dp)
                         )
@@ -238,7 +239,7 @@ fun FakeCallSettingsScreen(
                         contentColor = Color.White
                     )
                 ) {
-                    Text("Save", fontWeight = FontWeight.Medium)
+                    Text("Save", fontWeight = FontWeight.Medium, color = Color.White)
                 }
             },
             dismissButton = {

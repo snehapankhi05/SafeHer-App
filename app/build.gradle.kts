@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
@@ -8,6 +10,19 @@ android {
     namespace = "com.sneha.safeherapp"
     compileSdk = 36
 
+    // Load API Key from local.properties or project properties
+    val localProperties = Properties().apply {
+        val localPropertiesFile = rootProject.file("local.properties")
+        if (localPropertiesFile.exists()) {
+            localPropertiesFile.inputStream().use { load(it) }
+        }
+    }
+    
+    // Check local.properties first, then gradle.properties/command line
+    val mapsApiKey: String = localProperties.getProperty("MAPS_API_KEY") 
+        ?: project.findProperty("MAPS_API_KEY")?.toString() 
+        ?: ""
+
     defaultConfig {
         applicationId = "com.sneha.safeherapp"
         minSdk = 26
@@ -17,29 +32,10 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        val mapsApiKey = project.findProperty("MAPS_API_KEY") as String? ?: ""
+        // Use the mapsApiKey variable loaded above
         buildConfigField("String", "MAPS_API_KEY", "\"$mapsApiKey\"")
         manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey
     }
-
-    buildTypes {
-        release {
-            isMinifyEnabled = false
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
-        }
-    }
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
-    }
-    buildFeatures {
-        compose = true
-        buildConfig = true
-    }
-    val mapsApiKey: String = project.findProperty("MAPS_API_KEY") as String? ?: ""
 
     buildTypes {
         debug {
@@ -47,9 +43,24 @@ android {
             manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey
         }
         release {
+            isMinifyEnabled = false
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
             buildConfigField("String", "MAPS_API_KEY", "\"$mapsApiKey\"")
             manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey
         }
+    }
+    
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
+    }
+
+    buildFeatures {
+        compose = true
+        buildConfig = true
     }
     
     configurations.all {

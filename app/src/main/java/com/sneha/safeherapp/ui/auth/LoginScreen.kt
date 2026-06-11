@@ -108,7 +108,7 @@ fun LoginScreen(
                         label = { Text("Email Address") },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(16.dp),
-                        leadingIcon = { Icon(Icons.Default.Email, contentDescription = null) },
+                        leadingIcon = { Icon(Icons.Default.Email, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
                         colors = textFieldColors,
                         singleLine = true,
                         enabled = !isLoading
@@ -123,7 +123,7 @@ fun LoginScreen(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(16.dp),
                         visualTransformation = PasswordVisualTransformation(),
-                        leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
+                        leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
                         colors = textFieldColors,
                         singleLine = true,
                         enabled = !isLoading
@@ -138,14 +138,15 @@ fun LoginScreen(
                             .height(56.dp),
                         shape = RoundedCornerShape(16.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.primary
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = Color.White
                         ),
                         enabled = !isLoading
                     ) {
                         if (isLoading) {
                             CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
                         } else {
-                            Text("Login", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                            Text("Login", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White)
                         }
                     }
 

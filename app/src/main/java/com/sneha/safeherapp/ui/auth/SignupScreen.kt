@@ -113,7 +113,7 @@ fun SignupScreen(
                         label = { Text("Full Name") },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(16.dp),
-                        leadingIcon = { Icon(Icons.Default.Person, contentDescription = null) },
+                        leadingIcon = { Icon(Icons.Default.Person, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
                         colors = textFieldColors,
                         singleLine = true,
                         enabled = !isLoading
@@ -127,7 +127,7 @@ fun SignupScreen(
                         label = { Text("Email Address") },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(16.dp),
-                        leadingIcon = { Icon(Icons.Default.Email, contentDescription = null) },
+                        leadingIcon = { Icon(Icons.Default.Email, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
                         colors = textFieldColors,
                         singleLine = true,
                         enabled = !isLoading
@@ -142,7 +142,7 @@ fun SignupScreen(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(16.dp),
                         visualTransformation = PasswordVisualTransformation(),
-                        leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
+                        leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
                         colors = textFieldColors,
                         singleLine = true,
                         enabled = !isLoading
@@ -187,14 +187,15 @@ fun SignupScreen(
                             .height(56.dp),
                         shape = RoundedCornerShape(16.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.primary
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = Color.White
                         ),
                         enabled = !isLoading
                     ) {
                         if (isLoading) {
                             CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
                         } else {
-                            Text("Create Account", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                            Text("Create Account", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White)
                         }
                     }
 
